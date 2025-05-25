@@ -81,7 +81,7 @@ def chunk_list(lst, chunk_size=100):
         yield lst[i:i + chunk_size]
 
 
-def get_advert_stats(advert_payload):
+def get_advert_stats(advert_payload, order_sum):
     if not advert_payload:
         return (0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
@@ -128,18 +128,14 @@ def get_advert_stats(advert_payload):
                 total_cost += day.get("sum", 0.0)
                 total_sum_price += day.get("sum_price", 0.0)
 
-        if idx < len(chunks):
-            print("⏳ Ждём 60 секунд...")
-            time.sleep(60)
+        ctr = (total_clicks / total_views * 100) if total_views else 0
+        cpm = (total_cost / total_views * 1000) if total_views else 0
+        cpc = (total_cost / total_clicks) if total_clicks else 0
+        cpo = (total_cost / total_orders) if total_orders else 0
+        drr = (total_cost / order_sum * 100) if order_sum else 0  
 
-    ctr = (total_clicks / total_views * 100) if total_views else 0
-    cpm = (total_cost / total_views * 1000) if total_views else 0
-    cpc = (total_cost / total_clicks) if total_clicks else 0
-    cpo = (total_cost / total_orders) if total_orders else 0
-    drr = (total_cost / total_sum_price * 100) if total_sum_price else 0
-
-    return (total_views, total_clicks, total_orders, int(total_sum_price),
-            total_cost, ctr, cpm, cpc, cpo, drr)
+        return (total_views, total_clicks, total_orders, int(total_sum_price),
+                total_cost, ctr, cpm, cpc, cpo, drr)
 
 
 def debug_run():
