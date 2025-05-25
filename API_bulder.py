@@ -132,7 +132,7 @@ def get_advert_stats(advert_payload, order_sum):
         cpm = (total_cost / total_views * 1000) if total_views else 0
         cpc = (total_cost / total_clicks) if total_clicks else 0
         cpo = (total_cost / total_orders) if total_orders else 0
-        drr = (total_cost / order_sum * 100) if order_sum else 0  
+        drr = (total_cost / order_sum * 100) if order_sum else 0
 
         return (total_views, total_clicks, total_orders, int(total_sum_price),
                 total_cost, ctr, cpm, cpc, cpo, drr)
