@@ -143,8 +143,11 @@ def debug_run():
         print(f"📅 Дата запроса: {TODAY}")
         order_count, order_sum = get_orders()
         advert_payload = get_advert_ids()
-        (views, clicks, adv_orders, adv_sum_price,
-         adv_cost, ctr, cpm, cpc, cpo, drr) = get_advert_stats(advert_payload)
+
+        (
+            views, clicks, adv_orders, adv_sum_price,
+            adv_cost, ctr, cpm, cpc, cpo, drr
+        ) = get_advert_stats(advert_payload, order_sum)
 
         message = (
             f"Заказы   {order_count}шт., {order_sum:,}руб. \n"
