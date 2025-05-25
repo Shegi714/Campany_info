@@ -28,7 +28,7 @@ jobs:
         run: pip install requests
 
       - name: 🚀 Запуск скрипта
-        run: python script.py
+        run: python API_bulder.py
 
         env:
           WB_TOKEN: ${{ secrets.WB_TOKEN }}
