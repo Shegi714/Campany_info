@@ -17,25 +17,21 @@ TELEGRAM_CHAT_ID = os.environ['TG_CHAT_ID']
 TODAY = datetime.now().strftime('%Y-%m-%d')
 
 # === TIME WAITING ===
-def wait_until_next_allowed_hour():
+def wait_conditionally_until_hour():
     allowed_hours = [8, 10, 12, 14, 16, 18, 20]
     now_utc = datetime.utcnow()
     msk_now = now_utc + timedelta(hours=3)
+    current_hour = msk_now.hour
+    current_minute = msk_now.minute
 
-    for hour in allowed_hours:
-        candidate = msk_now.replace(hour=hour, minute=0, second=0, microsecond=0)
-        if candidate > msk_now:
-            wait_seconds = (candidate - msk_now).total_seconds()
-            print(f"⏳ Ждём до {candidate.strftime('%H:%M')} МСК ({int(wait_seconds)} сек)...")
-            time.sleep(wait_seconds)
-            return
-
-    # Если уже позже 20:00 — ждём до 08:00 следующего дня
-    next_day = msk_now + timedelta(days=1)
-    next_target = next_day.replace(hour=8, minute=0, second=0, microsecond=0)
-    wait_seconds = (next_target - msk_now).total_seconds()
-    print(f"⏳ Поздно. Ждём до завтра 08:00 МСК ({int(wait_seconds)} сек)...")
-    time.sleep(wait_seconds)
+    # если мы попали точно в нужный час и ещё есть минуты до начала — ждём
+    if current_hour in allowed_hours and current_minute < 1:
+        target = msk_now.replace(minute=0, second=0, microsecond=0)
+        wait_seconds = (target - msk_now).total_seconds()
+        print(f"⏳ Ждём до {target.strftime('%H:%M')} МСК ({int(wait_seconds)} сек)...")
+        time.sleep(wait_seconds)
+    else:
+        print(f"🕒 Сейчас {msk_now.strftime('%H:%M')} МСК — отправляем сразу.")
 
 
 # === TELEGRAM ===
@@ -188,7 +184,7 @@ def debug_run():
         print("\n🧾 Сообщение сформировано:")
         print(message)
 
-        wait_until_next_allowed_hour()
+        wait_conditionally_until_hour()
         send_telegram_message(message)
 
     except Exception as e:
