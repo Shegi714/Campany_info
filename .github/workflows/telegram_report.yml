@@ -1,20 +1,23 @@
-name: Telegram Report Bot
+name: Wildberries Telegram Bot
 
 on:
   schedule:
-    - cron: '0 5 * * *'   # 08:00 MSK
-    - cron: '0 7 * * *'   # 10:00 MSK
-    - cron: '0 9 * * *'   # 12:00 MSK
-    - cron: '0 11 * * *'  # 14:00 MSK
-    - cron: '0 13 * * *'  # 16:00 MSK
-    - cron: '0 15 * * *'  # 18:00 MSK
-    - cron: '40 16 * * *'  # 20:00 MSK
+    # Запускается каждые 2 часа с 07:30 UTC (это 10:30 МСК) до 16:30 UTC (19:30 МСК)
+    - cron: '30 4 * * *'  # 07:30 MSK
+    - cron: '30 6 * * *'  # 09:30 MSK
+    - cron: '30 8 * * *'  # 11:30 MSK
+    - cron: '30 10 * * *' # 13:30 MSK
+    - cron: '30 12 * * *' # 15:30 MSK
+    - cron: '30 14 * * *' # 17:30 MSK
+    - cron: '30 16 * * *' # 19:30 MSK
 
-  workflow_dispatch:  # запуск вручную
+  workflow_dispatch:  # ручной запуск
 
 jobs:
   send-report:
     runs-on: ubuntu-latest
+    timeout-minutes: 60  # безопасность
+
     steps:
       - name: 📥 Клонируем репозиторий
         uses: actions/checkout@v3
@@ -24,12 +27,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 📦 Устанавливаем зависимости (если появятся)
+      - name: 📦 Устанавливаем зависимости
         run: pip install requests
 
       - name: 🚀 Запуск скрипта
-        run: python API_bulder.py
-
+        run: python script.py
         env:
           WB_TOKEN: ${{ secrets.WB_TOKEN }}
           TG_TOKEN: ${{ secrets.TG_TOKEN }}

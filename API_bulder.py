@@ -2,22 +2,43 @@ import requests
 import json
 import time
 import os
-from math import ceil
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # === CONFIGURATION ===
 WB_HEADERS = {
     'accept': 'application/json',
-    'Authorization': os.environ['WB_TOKEN']  # <-- GitHub Secret
+    'Authorization': os.environ['WB_TOKEN']
 }
 
-TELEGRAM_BOT_TOKEN = os.environ['TG_TOKEN']  # <-- GitHub Secret
-TELEGRAM_CHAT_ID = os.environ['TG_CHAT_ID']  # <-- GitHub Secret
+TELEGRAM_BOT_TOKEN = os.environ['TG_TOKEN']
+TELEGRAM_CHAT_ID = os.environ['TG_CHAT_ID']
 
 TODAY = datetime.now().strftime('%Y-%m-%d')
 
+# === TIME WAITING ===
+def wait_until_next_allowed_hour():
+    allowed_hours = [8, 10, 12, 14, 16, 18, 20]
+    now_utc = datetime.utcnow()
+    msk_now = now_utc + timedelta(hours=3)
 
+    for hour in allowed_hours:
+        candidate = msk_now.replace(hour=hour, minute=0, second=0, microsecond=0)
+        if candidate > msk_now:
+            wait_seconds = (candidate - msk_now).total_seconds()
+            print(f"⏳ Ждём до {candidate.strftime('%H:%M')} МСК ({int(wait_seconds)} сек)...")
+            time.sleep(wait_seconds)
+            return
+
+    # Если уже позже 20:00 — ждём до 08:00 следующего дня
+    next_day = msk_now + timedelta(days=1)
+    next_target = next_day.replace(hour=8, minute=0, second=0, microsecond=0)
+    wait_seconds = (next_target - msk_now).total_seconds()
+    print(f"⏳ Поздно. Ждём до завтра 08:00 МСК ({int(wait_seconds)} сек)...")
+    time.sleep(wait_seconds)
+
+
+# === TELEGRAM ===
 def send_telegram_message(message: str):
     url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
     payload = {
@@ -34,6 +55,7 @@ def send_telegram_message(message: str):
         print(f"❌ Ошибка отправки в Telegram: {e}")
 
 
+# === WILDBERRIES DATA ===
 def get_orders():
     url = f'https://statistics-api.wildberries.ru/api/v1/supplier/orders?dateFrom={TODAY}'
     res = requests.get(url, headers=WB_HEADERS)
@@ -44,7 +66,6 @@ def get_orders():
     for order in orders:
         order_date = order.get("date", "")[:10]
         srid = order.get("srid")
-
         if srid and order_date == TODAY:
             srid_map[srid].append(order)
 
@@ -68,10 +89,7 @@ def get_advert_ids():
     for group in data.get("adverts", []):
         if group.get("status") in [9, 11]:
             for ad in group.get("advert_list", []):
-                advert_ids.append({
-                    "id": ad["advertId"],
-                    "dates": [TODAY]
-                })
+                advert_ids.append({"id": ad["advertId"], "dates": [TODAY]})
 
     return advert_ids
 
@@ -100,7 +118,7 @@ def get_advert_stats(advert_payload, order_sum):
         while True:
             try:
                 body = json.dumps(chunk, ensure_ascii=False)
-                print(f"📤 Отправка чанка {idx}/{len(chunks)} ({len(chunk)} кампаний)")
+                print(f"📤 Отправка чанка {idx}/{len(chunks)}")
                 res = requests.post(url, headers=headers, data=body)
 
                 if res.status_code == 429:
@@ -132,7 +150,6 @@ def get_advert_stats(advert_payload, order_sum):
             print("⏳ Ждём 60 секунд...")
             time.sleep(60)
 
-    # ✅ Правильное место для return
     ctr = (total_clicks / total_views * 100) if total_views else 0
     cpm = (total_cost / total_views * 1000) if total_views else 0
     cpc = (total_cost / total_clicks) if total_clicks else 0
@@ -143,17 +160,15 @@ def get_advert_stats(advert_payload, order_sum):
             total_cost, ctr, cpm, cpc, cpo, drr)
 
 
-
+# === MAIN ===
 def debug_run():
     try:
         print(f"📅 Дата запроса: {TODAY}")
         order_count, order_sum = get_orders()
         advert_payload = get_advert_ids()
 
-        (
-            views, clicks, adv_orders, adv_sum_price,
-            adv_cost, ctr, cpm, cpc, cpo, drr
-        ) = get_advert_stats(advert_payload, order_sum)
+        (views, clicks, adv_orders, adv_sum_price,
+         adv_cost, ctr, cpm, cpc, cpo, drr) = get_advert_stats(advert_payload, order_sum)
 
         message = (
             f"Заказы   {order_count}шт., {order_sum:,}руб. \n"
@@ -170,9 +185,10 @@ def debug_run():
             f"CPO ~ {round(cpo, 1)}"
         )
 
-        print("\n🧾 Сообщение:\n")
+        print("\n🧾 Сообщение сформировано:")
         print(message)
 
+        wait_until_next_allowed_hour()
         send_telegram_message(message)
 
     except Exception as e:
