@@ -5,7 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ce629da5-7e80-4822-9fb8-38192fff29d4" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/telegram_report.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/telegram_report.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -267,7 +266,7 @@
       <workItem from="1748072922671" duration="4620000" />
       <workItem from="1748098646082" duration="3546000" />
       <workItem from="1748160829050" duration="6171000" />
-      <workItem from="1748249646793" duration="902000" />
+      <workItem from="1748249646793" duration="2094000" />
     </task>
     <servers />
   </component>
